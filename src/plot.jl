@@ -8,6 +8,7 @@ export file,
        imagesc,
        loglog,
        oplot,
+       oplothist,
        plot,
        plothist,
        semilogx,
@@ -32,21 +33,6 @@ display() = display(_pwinston)
 semilogx(args...; kvs...) = plot(args...; xlog=true, kvs...)
 semilogy(args...; kvs...) = plot(args...; ylog=true, kvs...)
 loglog(args...; kvs...) = plot(args...; xlog=true, ylog=true, kvs...)
-
-#histogram
-#XXX: multiple histograms can not be cycled if there is not 2 arguments present
-plothist(args...; kvs...)=plot(args...; histogram=true, kvs...)
-plothist(x::AbstractVector; kvs...)=plothist(x,[1]; kvs...)
-plothist(x::AbstractVector, spec::String; kvs...)=plothist(x,[1], spec; kvs...)
-
-#overplot histograms
-plothist(p::FramedPlot,args...; kvs...)=_plot(p,args...; histogram=true, kvs...)
-plothist(p::FramedPlot,x::AbstractVector; kvs...)=plothist(p,x,[1]; kvs...)
-plothist(p::FramedPlot,x::AbstractVector, spec::String; kvs...)=plothist(p,x,[1], spec; kvs...)
-
-oplothist(args...; kvs...)=plothist(args...; overplot=true, kvs...)
-oplothist(p::FramedPlot,args...; kvs...)=plothist(p,args...; overplot=true, kvs...)
-
 
 const chartokens = [
     '-' => {:linekind => "solid"},
@@ -98,6 +84,7 @@ plot(p::FramedPlot, y; kvs...) = plot(p, 1:length(y), y; kvs...)
 plot(p::FramedPlot, y, spec::String; kvs...) = plot(p, 1:length(y), y, spec; kvs...)
 function _plot(p::FramedPlot, x, y, args...; kvs...)
     args = {args...}
+    components = {}
 
     while true
         sopts = [ :linekind => "solid" ] # TODO:cycle colors
@@ -105,59 +92,13 @@ function _plot(p::FramedPlot, x, y, args...; kvs...)
             merge!(sopts, _parse_style(shift!(args)))
         end
 
-        #Case 1: Histogram
-        if histogram
-            if length(y)==1 && y[1]==1
-                c = Histogram(hist(x)...,sopts)
-            elseif length(y)==1
-                c = Histogram(hist(x,y[1])...,sopts)
-            else
-                c = Histogram(hist(x,y)...,sopts)
-            end
-
-            #Setting kind and color for the last object from named variables
-            for (k,v) in kvs
-                if k in [:linekind, :color, :fillcolor, :linecolor]
-                    style(c, k, v)
-                end
-            end
-            
-        #Case 2: Last object to plot
-        elseif length(args)==0
-
-            #Assume curve and overwrite with points if :symbolkind is present
-            c=Curve(x,y,sopts)
-            for (k,v) in kvs
-                if k==:symbolkind
-                    c = Points(x, y, sopts)
-                    break
-                end
-            end
-
-            #Setting kind and color for the last object from named variables
-            for (k,v) in kvs
-                if k in [:linekind, :symbolkind, :color, :fillcolor, :linecolor]
-                    style(c, k, v)
-                end
-            end
-
-        #Case 3: Symbols
-        elseif haskey(sopts, :symbolkind)
-            c = Points(x,y,sopts)
-
-        #Case 4: Curve
+        if haskey(sopts, :symbolkind)
+            c = Points(x, y, sopts)
         else
             c = Curve(x, y, sopts)
         end
-
-        #Setting width & size from named variables
-        for (k,v) in kvs
-            if k in [:linewidth, :symbolsize]
-                style(c, k, v)
-            end
-        end
+        push!(components, c)
         add(p, c)
-
 
         length(args) == 0 && break
         length(args) == 1 && error("wrong number of arguments")
@@ -166,12 +107,19 @@ function _plot(p::FramedPlot, x, y, args...; kvs...)
     end
 
     for (k,v) in kvs
-        setattr(p, k, v)
+        if k in [:linekind,:symbolkind,:color,:linecolor,:linewidth,:symbolsize]
+            for c in components
+                style(c, k, v)
+            end
+        else
+            setattr(p, k, v)
+        end
     end
 
     global _pwinston = p
     p
 end
+
 function plot(p::FramedPlot, x, y, args...; kvs...)
     _plot(p, x, y, args...; kvs...)
     display(p)
@@ -259,3 +207,25 @@ end
 spy(S::SparseMatrixCSC) = spy(S, 100, 100)
 spy(A::AbstractMatrix, nrS, ncS) = spy(sparse(A), nrS, ncS)
 spy(A::AbstractMatrix) = spy(sparse(A))
+
+function plothist(p::FramedPlot, h::(Range,Vector); kvs...)
+    c = Histogram(h...)
+    add(p, c)
+
+    for (k,v) in kvs
+        if k in [:color,:linecolor,:linekind,:linetype,:linewidth]
+            style(c, k, v)
+        else
+            setattr(p, k, v)
+        end
+    end
+
+    global _pwinston = p
+    display(p)
+    p
+end
+plothist(p::FramedPlot, args...; kvs...) = plothist(p::FramedPlot, hist(args...); kvs...)
+plothist(args...; kvs...) = plothist(FramedPlot(), args...; kvs...)
+
+# shortcut for overplotting
+oplothist(args...; kvs...) = plothist(_pwinston, args...; kvs...)
