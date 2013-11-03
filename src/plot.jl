@@ -13,7 +13,9 @@ export file,
        plothist,
        semilogx,
        semilogy,
-       spy
+       spy,
+       fig,
+       errorbar
 
 if output_surface == :gtk
     include("gtk.jl")
@@ -229,3 +231,78 @@ plothist(args...; kvs...) = plothist(FramedPlot(), args...; kvs...)
 
 # shortcut for overplotting
 oplothist(args...; kvs...) = plothist(_pwinston, args...; kvs...)
+
+#fig
+fig(; kvs...)=fig(FramedPlot(); kvs...)
+function fig(p::FramedPlot; kvs...)
+
+#    for (k,v) in kvs
+#        f_k=split(string(k),".")
+        
+#        if length(f_k) == 2
+#            println(f_k[1])
+#            println(f_k[2])
+#        end
+#    end
+
+    for (k,v) in kvs
+        setattr(p,k,v)
+    end
+    global _pwinston = p
+    p
+end
+
+#heatmap(data)=heatmap(FramedPlot(),data)
+#function heatmap(p::FramedPlot,data::AbstractArray{Real,2},e1,e2)
+#    hdata, e1, e2r = hist2d(data,e1,e2)
+#end
+
+#errorbar
+errorbar(args...; kvs...) = errorbar(_pwinston, args...; kvs...)
+function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=nothing, yerr=nothing, kvs...)
+
+    xn=length(x)
+    yn=length(y)
+
+    if xerr != nothing
+        xen = length(xerr)
+        if xen == 1
+            xerr = xerr*ones(xn)
+            cx = SymmetricErrorBarsX(x, y, xerr)
+        elseif xen == xn
+            cx = SymmetricErrorBarsX(x, y, xerr)
+        elseif xen == 2xn
+            cx = ErrorBarsX(y, x.-xerr[1:xn], x.+xerr[xn+1:xen])
+        else
+            warn("Dimensions of x and xerr do not match")
+        end
+        
+        for (k,v) in kvs
+            style(cx, k, v)
+        end
+        add(p,cx)
+    end
+
+    if yerr != nothing
+        yen=length(yerr)
+        if yen == 1
+            yerr=yerr*ones(yn)
+            cy = SymmetricErrorBarsY(x, y, yerr)
+        elseif yen == yn
+            cy = SymmetricErrorBarsY(x, y, yerr)
+        elseif yen == 2yn
+            cy = ErrorBarsY(x, y.-yerr[1:yn], y.+yerr[yn+1:yen])
+        else
+            warn("Dimensions of y and yerr do not match")
+        end
+        
+        for (k,v) in kvs
+            style(cy, k, v)
+        end
+        add(p,cy)
+    end
+
+    global _pwinston = p
+    display(p)
+    p
+end
