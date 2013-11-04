@@ -15,7 +15,10 @@ export file,
        semilogy,
        spy,
        fig,
-       errorbar
+       errorbar,
+       title,
+       xlabel,
+       ylabel
 
 if output_surface == :gtk
     include("gtk.jl")
@@ -30,6 +33,10 @@ _pwinston = FramedPlot()
 #system functions
 file(fname::String) = file(_pwinston, fname)
 display() = display(_pwinston)
+
+for f in (:xlabel,:ylabel,:title)
+    @eval $f(s::String) = (setattr(_pwinston, $f=s); display(_pwinston))
+end
 
 #shortcuts for creating log-scale plots
 semilogx(args...; kvs...) = plot(args...; xlog=true, kvs...)
@@ -252,39 +259,17 @@ function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=noth
 
     if xerr != nothing
         xen = length(xerr)
-        if xen == 1
-            xerr = xerr*ones(xn)
-            cx = SymmetricErrorBarsX(x, y, xerr)
-        elseif xen == xn
-            cx = SymmetricErrorBarsX(x, y, xerr)
-        elseif xen == 2xn
-            cx = ErrorBarsX(y, x.-xerr[1:xn], x.+xerr[xn+1:xen])
-        else
-            warn("Dimensions of x and xerr do not match")
-        end
-        
-        for (k,v) in kvs
-            style(cx, k, v)
-        end
+        if xen == xn; cx = SymmetricErrorBarsX(x, y, xerr); end
+        if xen == 2xn; cx = ErrorBarsX(y, x.-xerr[1:xn], x.+xerr[xn+1:xen]); end
+        style(cx; kvs...)
         add(p,cx)
     end
 
     if yerr != nothing
         yen=length(yerr)
-        if yen == 1
-            yerr=yerr*ones(yn)
-            cy = SymmetricErrorBarsY(x, y, yerr)
-        elseif yen == yn
-            cy = SymmetricErrorBarsY(x, y, yerr)
-        elseif yen == 2yn
-            cy = ErrorBarsY(x, y.-yerr[1:yn], y.+yerr[yn+1:yen])
-        else
-            warn("Dimensions of y and yerr do not match")
-        end
-        
-        for (k,v) in kvs
-            style(cy, k, v)
-        end
+        if yen == yn; cy = SymmetricErrorBarsY(x, y, yerr); end
+        if yen == 2yn; cy = ErrorBarsY(x, y.-yerr[1:yn], y.+yerr[yn+1:yen]); end
+        style(cy; kvs...)
         add(p,cy)
     end
 
