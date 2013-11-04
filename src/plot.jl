@@ -233,29 +233,15 @@ plothist(args...; kvs...) = plothist(FramedPlot(), args...; kvs...)
 oplothist(args...; kvs...) = plothist(_pwinston, args...; kvs...)
 
 #fig
-fig(; kvs...)=fig(FramedPlot(); kvs...)
+fig(;kvs...) = fig(FramedPlot(kvs...))
 function fig(p::FramedPlot; kvs...)
-
-#    for (k,v) in kvs
-#        f_k=split(string(k),".")
-        
-#        if length(f_k) == 2
-#            println(f_k[1])
-#            println(f_k[2])
-#        end
-#    end
-
-    for (k,v) in kvs
-        setattr(p,k,v)
-    end
+    setattr(p; kvs...)
     global _pwinston = p
     p
 end
-
-#heatmap(data)=heatmap(FramedPlot(),data)
-#function heatmap(p::FramedPlot,data::AbstractArray{Real,2},e1,e2)
-#    hdata, e1, e2r = hist2d(data,e1,e2)
-#end
+fig(axis::_Alias; kvs...)=setattr(axis; kvs...)
+fig(axis::HalfAxisX; kvs...)=setattr(axis; kvs...)
+fig(axis::HalfAxisY; kvs...)=setattr(axis; kvs...)
 
 #errorbar
 errorbar(args...; kvs...) = errorbar(_pwinston, args...; kvs...)
@@ -306,3 +292,8 @@ function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=noth
     display(p)
     p
 end
+
+#heatmap(data)=heatmap(FramedPlot(),data)
+#function heatmap(p::FramedPlot,data::AbstractArray{Real,2},e1,e2)
+#    hdata, e1, e2r = hist2d(data,e1,e2)
+#end
