@@ -14,12 +14,12 @@ export file,
        semilogx,
        semilogy,
        spy,
-       fig,
        errorbar,
        title,
        xlabel,
        ylabel,
-       errorbar
+       errorbar,
+       fig
 
 if output_surface == :gtk
     include("gtk.jl")
@@ -240,18 +240,6 @@ plothist(args...; kvs...) = plothist(FramedPlot(), args...; kvs...)
 # shortcut for overplotting
 oplothist(args...; kvs...) = plothist(_pwinston, args...; kvs...)
 
-<<<<<<< HEAD
-#fig
-fig(;kvs...) = fig(FramedPlot(kvs...))
-function fig(p::FramedPlot; kvs...)
-    setattr(p; kvs...)
-    global _pwinston = p
-    p
-end
-fig(axis::_Alias; kvs...)=setattr(axis; kvs...)
-fig(axis::HalfAxisX; kvs...)=setattr(axis; kvs...)
-fig(axis::HalfAxisY; kvs...)=setattr(axis; kvs...)
-
 #errorbar
 errorbar(args...; kvs...) = errorbar(_pwinston, args...; kvs...)
 function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=nothing, yerr=nothing, kvs...)
@@ -294,3 +282,14 @@ end
 #function heatmap(p::FramedPlot,data::AbstractArray{Real,2},e1,e2)
 #    hdata, e1, e2r = hist2d(data,e1,e2)
 #end
+
+#fig
+fig(;kvs...) = fig(FramedPlot(kvs...))
+function fig(p::FramedPlot; kvs...)
+    setattr(p; kvs...)
+    global _pwinston = p
+    p
+end
+fig(axis::_Alias; kvs...)=setattr(axis; kvs...)
+fig(axis::HalfAxisX; kvs...)=setattr(axis; kvs...)
+fig(axis::HalfAxisY; kvs...)=setattr(axis; kvs...)
