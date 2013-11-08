@@ -9,8 +9,10 @@ export errorbar,
        loglog,
        oplot,
        oplothist,
+       oplothist2d,
        plot,
        plothist,
+       plothist2d,
        semilogx,
        semilogy,
        spy,
@@ -19,8 +21,7 @@ export errorbar,
        xlabel,
        xlim,
        ylabel,
-       ylim,
-       fig
+       ylim
 
 type WinstonDisplay <: Display end
 pushdisplay(WinstonDisplay())
@@ -161,8 +162,8 @@ oplot(args...; kvs...) = plot(_pwinston, args...; kvs...)
 
 function imagesc{T<:Real}(xrange::Interval, yrange::Interval, data::AbstractArray{T,2}, clims::Interval)
     p = FramedPlot()
-    setattr(p, "xrange", xrange)
-    setattr(p, "yrange", reverse(yrange))
+    setattr(p, :xrange, xrange)
+    setattr(p, :yrange, reverse(yrange))
     img = data2rgb(data, clims, _default_colormap)
     add(p, Image(xrange, reverse(yrange), img))
     p
@@ -220,6 +221,28 @@ plothist(args...; kvs...) = plothist(FramedPlot(), args...; kvs...)
 # shortcut for overplotting
 oplothist(args...; kvs...) = plothist(_pwinston, args...; kvs...)
 
+#hist2d
+function plothist2d(p::FramedPlot, h::(Union(Range,Vector),Union(Range,Vector),Array{Int,2}); colormap=_default_colormap, kvs...)
+    xr, yr, hdata = h
+
+    clims = (minimum(hdata), maximum(hdata)+1)
+
+    img = data2rgb(hdata, clims, colormap)'
+    add(p, Image((xr[1], xr[end]), (yr[1], yr[end]), img;))
+
+    #XXX: check if there is any Image-related named arguments
+    setattr(p; kvs...)
+
+    global _pwinston = p
+    p
+end
+plothist2d(p::FramedPlot, args...; kvs...) = plothist2d(p::FramedPlot, hist2d(args...); kvs...)
+plothist2d(args...; kvs...) = plothist2d(FramedPlot(), args...; kvs...)
+
+#shortcut for overplotting
+oplothist2d(args...; kvs...) = plothist2d(_pwinston, args..., kvs...)
+
+
 #errorbar
 errorbar(args...; kvs...) = errorbar(_pwinston, args...; kvs...)
 function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=nothing, yerr=nothing, kvs...)
@@ -256,5 +279,3 @@ function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=noth
     global _pwinston = p
     p
 end
-
-
