@@ -1,6 +1,8 @@
 output_surface = Winston.config_value("default","output_surface")
 output_surface = symbol(lowercase(get(ENV, "WINSTON_OUTPUT", output_surface)))
 
+include("colormaps.jl")
+
 export errorbar,
        file,
        imagesc,
@@ -100,12 +102,6 @@ function _parse_spec(spec::String)
     style
 end
 
-function default_color(i::Int)
-    cs = [0x000000, 0xED2C30, 0x008C46, 0x1859A9,
-          0xF37C21, 0x652B91, 0xA11C20, 0xB33794]
-    cs[mod1(i,length(cs))]
-end
-
 function plot(p::FramedPlot, args...; kvs...)
     args = {args...}
     components = {}
@@ -162,43 +158,6 @@ plot(args...; kvs...) = plot(FramedPlot(), args...; kvs...)
 # shortcut for overplotting
 oplot(args...; kvs...) = plot(_pwinston, args...; kvs...)
 
-typealias Interval (Real,Real)
-
-function data2rgb{T<:Real}(data::AbstractArray{T,2}, limits::Interval, colormap)
-    img = similar(data, Uint32)
-    ncolors = length(colormap)
-    limlower = limits[1]
-    limscale = ncolors/(limits[2]-limits[1])
-    for i = 1:length(data)
-        datai = data[i]
-        if isfinite(datai)
-            idxr = limscale*(datai - limlower)
-            idx = itrunc(idxr)
-            idx += idxr > convert(T, idx)
-            if idx < 1 idx = 1 end
-            if idx > ncolors idx = ncolors end
-            img[i] = colormap[idx]
-        else
-            img[i] = 0x00000000
-        end
-    end
-    img
-end
-
-# from http://www.metastine.com/?p=7
-function jetrgb(x)
-    fourValue = 4x
-    r = min(fourValue - 1.5, -fourValue + 4.5)
-    g = min(fourValue - 0.5, -fourValue + 3.5)
-    b = min(fourValue + 0.5, -fourValue + 2.5)
-    RGB(clamp(r,0.,1.), clamp(g,0.,1.), clamp(b,0.,1.))
-end
-
-JetColormap() = Uint32[ convert(RGB24,jetrgb(i/256)) for i = 1:256 ]
-
-_default_colormap = JetColormap()
-
-GrayColormap() = Uint32[ convert(RGB24,RGB(i/255,i/255,i/255)) for i = 0:255 ]
 
 function imagesc{T<:Real}(xrange::Interval, yrange::Interval, data::AbstractArray{T,2}, clims::Interval)
     p = FramedPlot()
@@ -298,18 +257,4 @@ function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=noth
     p
 end
 
-#heatmap(data)=heatmap(FramedPlot(),data)
-#function heatmap(p::FramedPlot,data::AbstractArray{Real,2},e1,e2)
-#    hdata, e1, e2r = hist2d(data,e1,e2)
-#end
 
-#fig
-fig(;kvs...) = fig(FramedPlot(kvs...))
-function fig(p::FramedPlot; kvs...)
-    setattr(p; kvs...)
-    global _pwinston = p
-    p
-end
-fig(axis::_Alias; kvs...)=setattr(axis; kvs...)
-fig(axis::HalfAxisX; kvs...)=setattr(axis; kvs...)
-fig(axis::HalfAxisY; kvs...)=setattr(axis; kvs...)
