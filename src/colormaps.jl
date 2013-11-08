@@ -1,5 +1,6 @@
 export GrayColormap,
        JetColormap,
+       BuGnColormap,
        colorbar
 
 #default colors
@@ -10,6 +11,49 @@ function default_color(i::Int)
 end
 
 ########################
+#linear interpolation & expand of colormaps
+function cmap_interp(cmap,bins)
+    cmap2 = zeros(bins,3)
+
+    xn, yn = size(cmap)
+    step=int(floor(bins/(xn-1)))
+    
+    for j in [1:xn-1]
+        cstart=(j-1)*step+1
+        if j == xn-1
+            cstop=bins
+            step=bins-cstart+1
+        else
+            cstop=j*step    
+        end
+
+        for q in [1,2,3]
+            start=cmap[j,q]
+            stop=cmap[j+1,q]
+            cmap2[cstart:cstop,q]=linspace(start,stop,step)
+        end
+    end
+
+    cmap2/256.
+end
+
+const BuGnCM=[247 252 253;
+              229 245 249;
+              204 236 230;
+              153 216 201;
+              102 194 164;
+              65 174 118;
+              35 139 69;
+              0 109 44;
+              0 68 27]
+
+cmap = cmap_interp(BuGnCM,256)
+BuGnColormap() = Uint32[convert(RGB24, RGB(cmap[i,1],cmap[i,2],cmap[i,3])) for i in 1:256]
+
+#exit()
+
+
+
 # jetrgb
 # from http://www.metastine.com/?p=7
 function jetrgb(x)
@@ -23,6 +67,7 @@ JetColormap() = Uint32[ convert(RGB24,jetrgb(i/256)) for i = 1:256 ]
 
 #grayscale
 GrayColormap() = Uint32[ convert(RGB24,RGB(i/255,i/255,i/255)) for i = 0:255 ]
+#GrayColormap() = Uint32[ convert(RGB24,RGB(255/i,255/i,255/i)) for i = 0:255 ]
 
 
 _default_colormap = JetColormap()
