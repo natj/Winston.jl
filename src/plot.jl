@@ -21,7 +21,8 @@ export errorbar,
        xlabel,
        xlim,
        ylabel,
-       ylim
+       ylim,
+       colorbar
 
 type WinstonDisplay <: Display end
 pushdisplay(WinstonDisplay())
@@ -159,6 +160,30 @@ plot(args...; kvs...) = plot(FramedPlot(), args...; kvs...)
 # shortcut for overplotting
 oplot(args...; kvs...) = plot(_pwinston, args...; kvs...)
 
+typealias Interval (Real,Real)
+
+#data2rgb
+function data2rgb{T<:Real}(data::AbstractArray{T,2}, limits::Interval, colormap)
+    img = similar(data, Uint32)
+    ncolors = length(colormap)
+    limlower = limits[1]
+    limscale = ncolors/(limits[2]-limits[1])
+    for i = 1:length(data)
+        datai = data[i]
+        if isfinite(datai)
+            idxr = limscale*(datai - limlower)
+            idx = itrunc(idxr)
+            idx += idxr > convert(T, idx)
+            if idx < 1 idx = 1 end
+            if idx > ncolors idx = ncolors end
+            img[i] = colormap[idx]
+        else
+            img[i] = 0x00000000
+        end
+    end
+    img
+end
+
 
 function imagesc{T<:Real}(xrange::Interval, yrange::Interval, data::AbstractArray{T,2}, clims::Interval)
     p = FramedPlot()
@@ -279,3 +304,53 @@ function errorbar(p::FramedPlot, x::AbstractVector, y::AbstractVector; xerr=noth
     global _pwinston = p
     p
 end
+
+
+#colorbar
+function colorbar(dmin, dmax; orientation="horizontal", colormap=_default_colormap, kvs...)
+
+    if orientation == "vertical"
+        p=FramedPlot(aspect_ratio=8.0)
+        setattr(p.x, draw_ticks=false)
+        setattr(p.y1, draw_ticks=false)
+        setattr(p.x1, draw_ticklabels=false)
+        setattr(p.y1, draw_ticklabels=false)
+        setattr(p.y2, draw_ticklabels=true) 
+
+        xr=(1,2)
+        yr=(dmin,dmax)
+
+        y=linspace(dmin,dmax,128)*1.0
+        data=[y y]
+    elseif orientation == "horizontal"
+        p=FramedPlot(aspect_ratio=0.1)
+        setattr(p.y, draw_ticks=false)
+        setattr(p.x1, draw_ticks=false)
+        setattr(p.y1, draw_ticklabels=false)
+        setattr(p.x1, draw_ticklabels=false)
+#        setattr(p.x2, draw_ticklabels=true) 
+
+        yr=(1,2)
+        xr=(dmin,dmax)
+
+        x=linspace(dmin,dmax,128)*1.0
+        data=[x', x']
+    end
+
+    setattr(p,:xrange, xr)
+    setattr(p,:yrange, yr)
+
+    setattr(p; kvs...)
+    ts = getattr(p,:title_style)
+    ts[:fontsize]= 20.0
+    
+    ts2 = getattr(p.y1,:label_style)
+    ts2[:angle]= 0.
+
+    clims = (minimum(data),maximum(data))
+
+    img = data2rgb(data, clims, colormap)
+    add(p, Image(xr, yr, img))
+    p
+end
+

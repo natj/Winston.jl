@@ -1284,9 +1284,9 @@ type Table <: PlotContainer
     content
     modified
 
-    function Table(rows, cols, args...)
+    function Table(rows, cols, args...; kvs...)
         self = new(Dict())
-        iniattr(self, args...)
+        iniattr(self, args...; kvs...)
         self.rows = rows
         self.cols = cols
         self.content = cell(rows, cols)
