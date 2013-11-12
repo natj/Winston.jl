@@ -114,8 +114,7 @@ YlOrRd=[1.002762e+00 9.738005e-01 8.046875e-01;
         2.147304e-05 -5.848428e-05 1.552849e-05;
         -9.614861e-08 1.494517e-07 6.091781e-10]
 
-#
-
+# Diverging
 BrBG=[3.426573e-01 2.117843e-01 2.767155e-02;
       4.634897e-03 -1.562274e-03 -7.772983e-03;
       1.188491e-04 1.823371e-04 3.204561e-04;
@@ -191,6 +190,7 @@ function colmap_fit(coeff, n, logscale)
     Uint32[convert(RGB24, RGB(cmr[i],cmg[i],cmb[i])) for i in 1:n]
 end
 
+#XXX merge these to cmap()
 
 # jetrgb
 # from http://www.metastine.com/?p=7
@@ -210,6 +210,7 @@ _default_colormap = JetColormap()
 
 ########################
 #linear interpolation & expand of colormaps
+#OBSELETE
 function cmap_interp(cmap,bins)
     cmap2 = zeros(bins,3)
 
