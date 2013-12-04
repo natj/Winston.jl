@@ -2,21 +2,55 @@ export cmap,
        GrayColormap,
        JetColormap
 
-#get_cmap
 
+#basic framework
+########################
+#sequential maps
+
+#diverging maps
+
+#qualitative maps
+
+
+abstract Colormap
+typealias Colourmap
+
+immutable seq_colmap <: Colormap
+    cm::Vector{RGB24}
+    x::Vector{Real} #abscissae (default 1-100)
+
+    function seq_colmap()
+        new(cm,x)
+    end
+end
+
+#Qualitative colormaps
+########################   
+
+#Standard palette
+Standard_set = [0x000000, 
+                0xED2C30, 
+                0x008C46, 
+                0x1859A9,
+                0xF37C21, 
+                0x652B91, 
+                0xA11C20, 
+                0xB33794]
+
+
+
+ 
 #default colors
 function default_color(i::Int)
-    cs = [0x000000, 0xED2C30, 0x008C46, 0x1859A9,
-          0xF37C21, 0x652B91, 0xA11C20, 0xB33794]
+    cs = Standard_set
     cs[mod1(i,length(cs))]
 end
 
-#Colormap coefficients
-########################
-SCols = [0x000000, 0xED2C30, 0x008C46, 0x1859A9,
-         0xF37C21, 0x652B91, 0xA11C20, 0xB33794]
-    
 
+#Colormap coefficients
+########################   
+
+#Maps based on ColorBrewer palettes
 #Sequential (single hue)
 Blues=[9.559659e-01 9.747080e-01 1.003551e+00;
        -9.370225e-04 -1.151277e-03 -1.706049e-03;
@@ -167,7 +201,7 @@ function cmap(colmap,n=256; logscale=false, bottom=nothing, top=nothing)
 end
 
 #Colmap_fit
-#Fit the colormaps with polynomials return RGB24
+#Fit the colormaps with polynomials; return RGB24
 function colmap_fit(coeff, n, logscale)
 
     function polyn(x,c)
