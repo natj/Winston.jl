@@ -310,7 +310,7 @@ end
 function colorbar(dmin, dmax; orientation="horizontal", colormap=_default_colormap, kvs...)
 
     if orientation == "vertical"
-        p=FramedPlot(aspect_ratio=8.0)
+        p=FramedPlot(aspect_ratio=10.0)
         setattr(p.x, draw_ticks=false)
         setattr(p.y1, draw_ticks=false)
         setattr(p.x1, draw_ticklabels=false)
@@ -320,7 +320,7 @@ function colorbar(dmin, dmax; orientation="horizontal", colormap=_default_colorm
         xr=(1,2)
         yr=(dmin,dmax)
 
-        y=linspace(dmin,dmax,128)*1.0
+        y=linspace(dmin,dmax,256)*1.0
         data=[y y]
     elseif orientation == "horizontal"
         p=FramedPlot(aspect_ratio=0.1)
@@ -328,12 +328,12 @@ function colorbar(dmin, dmax; orientation="horizontal", colormap=_default_colorm
         setattr(p.x1, draw_ticks=false)
         setattr(p.y1, draw_ticklabels=false)
         setattr(p.x1, draw_ticklabels=false)
-#        setattr(p.x2, draw_ticklabels=true) 
+        setattr(p.x2, draw_ticklabels=true) 
 
         yr=(1,2)
         xr=(dmin,dmax)
 
-        x=linspace(dmin,dmax,128)*1.0
+        x=linspace(dmin,dmax,256)*1.0
         data=[x', x']
     end
 
